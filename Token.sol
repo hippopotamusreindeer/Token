@@ -14,7 +14,7 @@ import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 // Define the contract, inheriting from multiple OpenZeppelin contracts for standard functionality.
-contract Jerry is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
+contract Token is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
 
     // State variables for WETH and Uniswap router addresses, and initial supply.
     address private WETH;
