@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Specifying the license under which the code is available.
-pragma solidity ^0.8.10;
+pragma solidity ^0.8.6;
 // Using a fixed version of Solidity.
 
 pragma abicoder v2;
