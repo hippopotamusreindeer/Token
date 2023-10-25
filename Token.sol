@@ -13,10 +13,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "@openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
- address public developer_wallet = 0x893a25A5744ab5680629D4EE8204B721B04342BD; //please insert address if necessary
+ //address public developer_wallet = 0x893a25A5744ab5680629D4EE8204B721B04342BD; //please insert address if necessary
 
 // Define the contract, inheriting from multiple OpenZeppelin contracts for standard functionality.
-contract Token is ERC20, ERC20Burnable, Ownable(developer_wallet), ReentrancyGuard  {
+contract Token is ERC20, ERC20Burnable, Ownable(0x893a25A5744ab5680629D4EE8204B721B04342BD), ReentrancyGuard  {
 
     // State variables for WETH and Uniswap router addresses, and initial supply.
     address private WETH;
@@ -43,7 +43,7 @@ contract Token is ERC20, ERC20Burnable, Ownable(developer_wallet), ReentrancyGua
     constructor() ERC20("Token", "TOKEN") {
         _mint(msg.sender, initialSupply);
         uniswapRouter = IUniswapV2Router02(UNISWAP_V2_ROUTER);
-        Ownable.transferOwnership(developer_wallet); // Pass the initial owner address to Ownable's constructor
+        Ownable.transferOwnership(0x893a25A5744ab5680629D4EE8204B721B04342BD); // Pass the initial owner address to Ownable's constructor
     }
 
     // Function to set WETH address, only callable by the owner.
