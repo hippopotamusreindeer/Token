@@ -13,7 +13,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "@openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
- //address public developer_wallet = 0x893a25A5744ab5680629D4EE8204B721B04342BD; //please insert address if necessary
+ 
 
 // Define the contract, inheriting from multiple OpenZeppelin contracts for standard functionality.
 contract Token is ERC20, ERC20Burnable, Ownable(0x893a25A5744ab5680629D4EE8204B721B04342BD), ReentrancyGuard  {
@@ -21,7 +21,7 @@ contract Token is ERC20, ERC20Burnable, Ownable(0x893a25A5744ab5680629D4EE8204B7
     // State variables for WETH and Uniswap router addresses, and initial supply.
     address private WETH;
     address private constant UNISWAP_V2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-
+    address public developer_wallet = 0x893a25A5744ab5680629D4EE8204B721B04342BD; //please insert address if necessary
     // Constants for burn and developer fees.
     uint8 private constant _burn_fee = 1;    // 1% Burn-Fee
     uint8 private constant _dev_fee = 15;    // 1.5% Dev-Fee
@@ -205,7 +205,7 @@ contract Token is ERC20, ERC20Burnable, Ownable(0x893a25A5744ab5680629D4EE8204B7
         );
 
         // Transfer Jerry Dev_Fees to Developer_Wallet
-        payable(0x893a25A5744ab5680629D4EE8204B721B04342BD).transfer(devFeeAmount);
+        payable(developer_wallet).transfer(devFeeAmount);
 
         // Burn the burn fee
         _burn(address(this), burnFeeAmount);
