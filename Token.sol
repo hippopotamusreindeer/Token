@@ -41,6 +41,7 @@ contract Token is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
     constructor() ERC20("Token", "TOKEN") {
         _mint(msg.sender, initialSupply);
         uniswapRouter = IUniswapV2Router02(UNISWAP_V2_ROUTER);
+        Ownable.transferOwnership(msg.sender); // Pass the initial owner address to Ownable's constructor
     }
 
     // Function to set WETH address, only callable by the owner.
