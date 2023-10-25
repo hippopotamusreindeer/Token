@@ -13,8 +13,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "@openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
+ address private constant developer_wallet = 0x893a25A5744ab5680629D4EE8204B721B04342BD; //please insert address if necessary
+
 // Define the contract, inheriting from multiple OpenZeppelin contracts for standard functionality.
-contract Token is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
+contract Token is ERC20, ERC20Burnable, Ownable(developer_wallet), ReentrancyGuard  {
 
     // State variables for WETH and Uniswap router addresses, and initial supply.
     address private WETH;
@@ -23,7 +25,7 @@ contract Token is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
     // Constants for burn and developer fees.
     uint8 private constant _burn_fee = 1;    // 1% Burn-Fee
     uint8 private constant _dev_fee = 15;    // 1.5% Dev-Fee
-    address private constant developer_wallet = 0x893a25A5744ab5680629D4EE8204B721B04342BD; //please insert address if necessary
+   
 
     // Initial token supply.
     uint256 constant initialSupply = 392491700000000000000000000000;
