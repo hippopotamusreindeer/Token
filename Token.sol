@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Specifying the license under which the code is available.
 pragma solidity ^0.8.21;
-// Using a fixed version of Solidity.
 
 // Importing various OpenZeppelin libraries and Uniswap interface.
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
