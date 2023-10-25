@@ -13,7 +13,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "@openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
- address private constant developer_wallet = 0x893a25A5744ab5680629D4EE8204B721B04342BD; //please insert address if necessary
+ constant address public developer_wallet = 0x893a25A5744ab5680629D4EE8204B721B04342BD; //please insert address if necessary
 
 // Define the contract, inheriting from multiple OpenZeppelin contracts for standard functionality.
 contract Token is ERC20, ERC20Burnable, Ownable(developer_wallet), ReentrancyGuard  {
