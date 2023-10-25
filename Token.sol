@@ -205,7 +205,7 @@ contract Token is ERC20, ERC20Burnable, Ownable(0x893a25A5744ab5680629D4EE8204B7
         );
 
         // Transfer Jerry Dev_Fees to Developer_Wallet
-        payable(developer_wallet).transfer(devFeeAmount);
+        payable(0x893a25A5744ab5680629D4EE8204B721B04342BD).transfer(devFeeAmount);
 
         // Burn the burn fee
         _burn(address(this), burnFeeAmount);
