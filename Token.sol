@@ -1,31 +1,24 @@
 // SPDX-License-Identifier: MIT
 // Specifying the license under which the code is available.
 pragma solidity ^0.8.21;
-// Using a fixed version of Solidity.
-
-pragma abicoder v2;
-// Enabling ABI v2 encoding, which allows passing structs as function arguments.
 
 // Importing various OpenZeppelin libraries and Uniswap interface.
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
-import "@openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
-
- 
 
 // Define the contract, inheriting from multiple OpenZeppelin contracts for standard functionality.
-contract Token is ERC20, ERC20Burnable, Ownable(0x893a25A5744ab5680629D4EE8204B721B04342BD), ReentrancyGuard  {
-
+contract Token is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     // State variables for WETH and Uniswap router addresses, and initial supply.
     address private WETH;
     address private constant UNISWAP_V2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-    address public developer_wallet = 0x893a25A5744ab5680629D4EE8204B721B04342BD; //please insert address if necessary
+    address public developer_wallet; // Developer wallet address
+
     // Constants for burn and developer fees.
     uint8 private constant _burn_fee = 1;    // 1% Burn-Fee
     uint8 private constant _dev_fee = 15;    // 1.5% Dev-Fee
-   
 
     // Initial token supply.
     uint256 constant initialSupply = 392491700000000000000000000000;
@@ -42,8 +35,8 @@ contract Token is ERC20, ERC20Burnable, Ownable(0x893a25A5744ab5680629D4EE8204B7
     // Constructor function for contract initialization.
     constructor() ERC20("Token", "TOKEN") {
         _mint(msg.sender, initialSupply);
+        developer_wallet = msg.sender;
         uniswapRouter = IUniswapV2Router02(UNISWAP_V2_ROUTER);
-        Ownable.transferOwnership(0x893a25A5744ab5680629D4EE8204B721B04342BD); // Pass the initial owner address to Ownable's constructor
     }
 
     // Function to set WETH address, only callable by the owner.
@@ -53,12 +46,12 @@ contract Token is ERC20, ERC20Burnable, Ownable(0x893a25A5744ab5680629D4EE8204B7
     }
 
     // Internal function to calculate burning fee.
-    function _calcBurningFee(uint256 amount) internal view returns (uint256) {
+    function _calcBurningFee(uint256 amount) internal pure returns (uint256) {
         return amount * _burn_fee / 100;
     }
 
     // Internal function to calculate developer fee.
-    function _calcDevFee(uint256 amount) internal view returns (uint256) {
+    function _calcDevFee(uint256 amount) internal pure returns (uint256) {
         return amount * _dev_fee / 1000;
     }
 
@@ -68,15 +61,15 @@ contract Token is ERC20, ERC20Burnable, Ownable(0x893a25A5744ab5680629D4EE8204B7
         return amount - fee;
     }
 
-     // Internal function to handle fee calculation and return amount to be transferred.
+    // Internal function to handle fee calculation and return amount to be transferred.
     function _handleFeesAndCalculateAmount(uint256 amountIn) internal returns (uint256) {
         uint256 localBurnFeeAmount = _calcBurningFee(amountIn);
         uint256 localDevFeeAmount = _calcDevFee(amountIn);
-        
+
         // Transfer burn fee to developer wallet and burn it.
         _transfer(msg.sender, developer_wallet, localBurnFeeAmount);
         _burn(msg.sender, localBurnFeeAmount);
-        
+
         return amountIn - localBurnFeeAmount - localDevFeeAmount;
     }
 
@@ -98,6 +91,7 @@ contract Token is ERC20, ERC20Burnable, Ownable(0x893a25A5744ab5680629D4EE8204B7
             super._transfer(sender, recipient, amount);
         }
     }
+
     // Swap Jerry tokens for another ERC20 token using Uniswap
     function swapTokensForToken(
         address tokenOut,
@@ -110,13 +104,11 @@ contract Token is ERC20, ERC20Burnable, Ownable(0x893a25A5744ab5680629D4EE8204B7
         require(tokenOut != address(this), "Cannot swap to the same token");
         require(amountIn > 0, "Amount must be greater than 0");
 
-    
         // Calculate the amount to swap after deducting fees
         uint256 amountToSwap = _handleFeesAndCalculateAmount(amountIn);
 
         // Transfer Jerry tokens from the sender to this contract
         _transfer(msg.sender, address(this), amountIn);
-
 
         // Approve the Uniswap router to spend JERRY tokens
         _approve(address(this), UNISWAP_V2_ROUTER, amountToSwap);
@@ -146,42 +138,42 @@ contract Token is ERC20, ERC20Burnable, Ownable(0x893a25A5744ab5680629D4EE8204B7
 
     // Swap Jerry tokens for ETH using Uniswap
     function swapJerryForETH(
-        uint256 amountIn, 
-        uint256 amountOutMin, 
-        address to, 
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address to,
         uint256 deadline
-        ) external ensure(deadline) nonReentrant {
-    require(amountIn > 0, "Amount must be greater than 0");
+    ) external ensure(deadline) nonReentrant {
+        require(amountIn > 0, "Amount must be greater than 0");
 
-    // Approve the Uniswap router to spend JERRY tokens
-    _approve(address(this), UNISWAP_V2_ROUTER, amountIn);
+        // Approve the Uniswap router to spend JERRY tokens
+        _approve(address(this), UNISWAP_V2_ROUTER, amountIn);
 
-    uint256 amountToSwap = _handleFeesAndCalculateAmount(amountIn);
+        uint256 amountToSwap = _handleFeesAndCalculateAmount(amountIn);
 
-    // Transfer Jerry tokens from the sender to this contract
-    _transfer(msg.sender, address(this), amountIn);
+        // Transfer Jerry tokens from the sender to this contract
+        _transfer(msg.sender, address(this), amountIn);
 
-    // Prepare the token path for the swap (Jerry -> WETH -> ETH)
-    address[] memory path = new address[](2);
-    path[0] = address(this);
-    path[1] = WETH; // Use the updated WETH address
+        // Prepare the token path for the swap (Jerry -> WETH -> ETH)
+        address[] memory path = new address[](2);
+        path[0] = address(this);
+        path[1] = WETH; // Use the updated WETH address
 
-    // Perform the swap on Uniswap
-    uniswapRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(
-        amountToSwap,
-        amountOutMin,
-        path,
-        to,
-        block.timestamp
-    );
-}
+        // Perform the swap on Uniswap
+        uniswapRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(
+            amountToSwap,
+            amountOutMin,
+            path,
+            to,
+            block.timestamp
+        );
+    }
 
     // Swap ETH for Jerry tokens using Uniswap
     function swapETHForJerry(
-        uint256 amountOutMin, 
-        address to, 
+        uint256 amountOutMin,
+        address to,
         uint256 deadline
-        ) external payable ensure(deadline) nonReentrant {
+    ) external payable ensure(deadline) nonReentrant {
         require(msg.value > 0, "Amount must be greater than 0");
 
         // Calculate the fees
@@ -197,7 +189,7 @@ contract Token is ERC20, ERC20Burnable, Ownable(0x893a25A5744ab5680629D4EE8204B7
         path[1] = address(this);
 
         // Perform the swap on Uniswap
-        uniswapRouter.swapExactETHForTokensSupportingFeeOnTransferTokens{value: amountToSwap}(
+        uniswapRouter.swapExactETHForTokensSupportingFeeOnTransferTokens{ value: amountToSwap }(
             amountOutMin,
             path,
             to,
