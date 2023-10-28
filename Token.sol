@@ -71,7 +71,6 @@ contract Token is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         _transfer(msg.sender, developerWallet, localDevFeeAmount);
         _burn(msg.sender, localBurnFeeAmount);
 
-        emit FeeDeducted(msg.sender, localBurnFeeAmount, localDevFeeAmount);
         return amountIn - localBurnFeeAmount - localDevFeeAmount;
     }
 
