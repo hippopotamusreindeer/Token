@@ -28,9 +28,20 @@ contract Token is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
     // Modifier to check transaction deadline
     uint private constant MAX_BLOCK_DIFFERENCE = 100;
 
+    // Create a state variable to track if the ensure modifier has been used
+    bool private initializedEnsure;
+    
+    // The new ensure modifier
     modifier ensure(uint targetBlock) {
+        // Check if it has been initialized already
+        require(!initializedEnsure, "ensure: Already initialized");
+    
         require(targetBlock >= block.number, "UniswapV2Router: EXPIRED");
         require(targetBlock <= block.number + MAX_BLOCK_DIFFERENCE, "UniswapV2Router: TOO FAR IN THE FUTURE");
+    
+        // Set initializedEnsure to true to prevent future execution
+        initializedEnsure = true;
+    
         _;
     }
 
