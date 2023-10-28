@@ -34,9 +34,6 @@ contract Token is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         _;
     }
 
-    event FeeDeducted(address indexed from, uint256 burnFee, uint256 devFee);
-    event TokenSwapped(address indexed from, address indexed toToken, uint256 amountIn, uint256 amountOut);
-
     // Constructor to initialize the contract
     constructor(address initialOwner, address _weth) public ERC20("Token", "TOKEN") Ownable(initialOwner) {
         require(initialOwner != address(0), "Invalid owner address");
@@ -142,7 +139,6 @@ function swapTokensForToken(
         to,
         block.timestamp 
     );
-     emit TokenSwapped(msg.sender, tokenOut, amountIn, amountOutMin); // Emitting event
 }
     // Swap Jerry tokens for ETH using Uniswap
     function swapJerryForETH(
@@ -175,7 +171,6 @@ function swapTokensForToken(
         to,
         block.timestamp 
     );
-     emit TokenSwapped(msg.sender, tokenOut, amountIn, amountOutMin); 
 }
 
     // Swap ETH for Jerry tokens using Uniswap
