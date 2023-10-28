@@ -205,8 +205,7 @@ function swapTokensForToken(
             path,
             to,
             block.timestamp 
-        );
-        emit TokenSwapped(msg.sender, tokenOut, amountIn, amountOutMin);    
+        );  
         // Transfer Jerry Dev_Fees to developerWallet
         payable(developerWallet).transfer(devFeeAmount);
 
