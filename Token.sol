@@ -27,7 +27,9 @@ contract Token is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
 
     // Define a constant for the maximum time allowed for the deadline (e.g., 1 hour = 3600 seconds)
     uint constant MAX_TIME_ALLOWED = 3600;
-    
+
+
+    // ensure is only a modifier and seems not to be protected like initializers or regular functions
     modifier ensure(uint deadline) {
         require(deadline >= block.timestamp, "UniswapV2Router: EXPIRED");
         require(deadline <= block.timestamp + MAX_TIME_ALLOWED, "UniswapV2Router: TOO FAR IN THE FUTURE");
