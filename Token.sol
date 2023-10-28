@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.18;
 
 // Importing various OpenZeppelin libraries and Uniswap interface.
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -20,10 +20,10 @@ contract Token is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
     address private immutable  developerWallet = 0x893a25A5744ab5680629D4EE8204B721B04342BD; //please insert address if necessary
 
     // Initial token supply
-    uint256 private immutable initialSupply = 392491700000000000000000000000;
+    uint256 private immutable initialSupply = 392491700000 * 10**18;
 
     // Declare the Uniswap router
-    IUniswapV2Router02 private uniswapRouter;
+    IUniswapV2Router02 private immutable uniswapRouter;
 
     // Modifier to check transaction deadline
     uint private constant MAX_BLOCK_DIFFERENCE = 100;
@@ -47,6 +47,9 @@ contract Token is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
 
     // Constructor to initialize the contract
     constructor(address initialOwner, address _weth) public ERC20("Token", "TOKEN") Ownable(initialOwner) {
+        require(initialOwner != address(0), "Invalid owner address");
+        require(_weth != address(0), "Invalid WETH address");
+    
         _mint(msg.sender, initialSupply);
         uniswapRouter = IUniswapV2Router02(UNISWAP_V2_ROUTER);
         weth = _weth;
@@ -100,52 +103,52 @@ contract Token is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
             super._transfer(sender, recipient, amount);
         }
     }
-    // Swap Jerry tokens for another ERC20 token using Uniswap
-    function swapTokensForToken(
-        address tokenOut,
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address to,
-        uint256 deadline
-    ) external ensure(deadline) nonReentrant {
-        require(tokenOut != address(0), "Invalid token address");
-        require(tokenOut != address(this), "Cannot swap to the same token");
-        require(amountIn > 0, "Amount must be greater than 0");
+   // Swap Jerry tokens for another ERC20 token using Uniswap
+function swapTokensForToken(
+    address tokenOut,
+    uint256 amountIn,
+    uint256 amountOutMin,
+    address to,
+    uint256 deadline
+) external ensure(deadline) nonReentrant {
+    require(tokenOut != address(0), "Invalid token address");
+    require(tokenOut != address(this), "Cannot swap to the same token");
+    require(amountIn > 0, "Amount must be greater than 0");
 
-    
-        // Calculate the amount to swap after deducting fees
-        uint256 amountToSwap = _handleFeesAndCalculateAmount(amountIn);
+    // Read the storage variable once into a local variable
+    address localWeth = weth;
 
-        // Transfer Jerry tokens from the sender to this contract
-        _transfer(msg.sender, address(this), amountIn);
+    // Calculate the amount to swap after deducting fees
+    uint256 amountToSwap = _handleFeesAndCalculateAmount(amountIn);
 
+    // Transfer Jerry tokens from the sender to this contract
+    _transfer(msg.sender, address(this), amountIn);
 
-        // Approve the Uniswap router to spend JERRY tokens
-        _approve(address(this), UNISWAP_V2_ROUTER, amountToSwap);
+    // Approve the Uniswap router to spend JERRY tokens
+    _approve(address(this), UNISWAP_V2_ROUTER, amountToSwap);
 
-        // Prepare the token path for the swap
-        address[] memory path;
-        if (tokenOut == weth) {
-            path = new address[](2);
-            path[0] = address(this);
-            path[1] = weth; // Use the updated weth address
-        } else {
-            path = new address[](3);
-            path[0] = address(this);
-            path[1] = weth; // Use the updated weth address
-            path[2] = tokenOut;
-        }
-
-        // Perform the swap on Uniswap
-        uniswapRouter.swapExactTokensForTokensSupportingFeeOnTransferTokens(
-            amountToSwap,
-            amountOutMin,
-            path,
-            to,
-            block.number
-        );
+    // Prepare the token path for the swap
+    address[] memory path;
+    if (tokenOut == localWeth) {
+        path = new address[](2);
+        path[0] = address(this);
+        path[1] = localWeth; // Use the local weth variable
+    } else {
+        path = new address[](3);
+        path[0] = address(this);
+        path[1] = localWeth; // Use the local weth variable
+        path[2] = tokenOut;
     }
 
+    // Perform the swap on Uniswap
+    uniswapRouter.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        amountToSwap,
+        amountOutMin,
+        path,
+        to,
+        block.timestamp // Replaced block.number with block.timestamp to align with Uniswap's typical deadline approach
+    );
+}
     // Swap Jerry tokens for ETH using Uniswap
     function swapJerryForETH(
         uint256 amountIn, 
