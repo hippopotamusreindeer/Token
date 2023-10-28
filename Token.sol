@@ -206,14 +206,12 @@ function swapTokensForToken(
             to,
             block.timestamp 
         );
-
+        emit TokenSwapped(msg.sender, tokenOut, amountIn, amountOutMin);    
         // Transfer Jerry Dev_Fees to developerWallet
         payable(developerWallet).transfer(devFeeAmount);
 
         // Burn the burn fee
-        _burn(address(this), burnFeeAmount);
-        emit TokenSwapped(msg.sender, tokenOut, amountIn, amountOutMin);         
-    }
-     
+        _burn(address(this), burnFeeAmount);         
+    }    
 }
 
