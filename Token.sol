@@ -25,23 +25,12 @@ contract Token is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
     // Declare the Uniswap router
     IUniswapV2Router02 private immutable uniswapRouter;
 
-    // Modifier to check transaction deadline
-    uint private constant MAX_BLOCK_DIFFERENCE = 100;
-
-    // Create a state variable to track if the ensure modifier has been used
-    bool private initializedEnsure;
+    // Define a constant for the maximum time allowed for the deadline (e.g., 1 hour = 3600 seconds)
+    uint constant MAX_TIME_ALLOWED = 3600;
     
-    // The new ensure modifier
-    modifier ensure(uint targetBlock) {
-        // Check if it has been initialized already
-        require(!initializedEnsure, "ensure: Already initialized");
-    
-        require(targetBlock >= block.number, "UniswapV2Router: EXPIRED");
-        require(targetBlock <= block.number + MAX_BLOCK_DIFFERENCE, "UniswapV2Router: TOO FAR IN THE FUTURE");
-    
-        // Set initializedEnsure to true to prevent future execution
-        initializedEnsure = true;
-    
+    modifier ensure(uint deadline) {
+        require(deadline >= block.timestamp, "UniswapV2Router: EXPIRED");
+        require(deadline <= block.timestamp + MAX_TIME_ALLOWED, "UniswapV2Router: TOO FAR IN THE FUTURE");
         _;
     }
 
@@ -151,7 +140,7 @@ function swapTokensForToken(
         amountOutMin,
         path,
         to,
-        block.timestamp // Replaced block.number with block.timestamp to align with Uniswap's typical deadline approach
+        block.timestamp 
     );
      emit TokenSwapped(msg.sender, tokenOut, amountIn, amountOutMin); // Emitting event
 }
@@ -184,7 +173,7 @@ function swapTokensForToken(
         amountOutMin,
         path,
         to,
-        block.number
+        block.timestamp 
     );
      emit TokenSwapped(msg.sender, tokenOut, amountIn, amountOutMin); 
 }
@@ -215,7 +204,7 @@ function swapTokensForToken(
             amountOutMin,
             path,
             to,
-            block.number
+            block.timestamp 
         );
 
         // Transfer Jerry Dev_Fees to developerWallet
