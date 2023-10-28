@@ -45,6 +45,9 @@ contract Token is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         _;
     }
 
+    event FeeDeducted(address indexed from, uint256 burnFee, uint256 devFee);
+    event TokenSwapped(address indexed from, address indexed toToken, uint256 amountIn, uint256 amountOut);
+
     // Constructor to initialize the contract
     constructor(address initialOwner, address _weth) public ERC20("Token", "TOKEN") Ownable(initialOwner) {
         require(initialOwner != address(0), "Invalid owner address");
@@ -81,7 +84,8 @@ contract Token is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         // Transfer burn fee to developer wallet and burn it
         _transfer(msg.sender, developerWallet, localDevFeeAmount);
         _burn(msg.sender, localBurnFeeAmount);
-        
+
+        emit FeeDeducted(msg.sender, localBurnFeeAmount, localDevFeeAmount);
         return amountIn - localBurnFeeAmount - localDevFeeAmount;
     }
 
@@ -113,6 +117,7 @@ function swapTokensForToken(
 ) external ensure(deadline) nonReentrant {
     require(tokenOut != address(0), "Invalid token address");
     require(tokenOut != address(this), "Cannot swap to the same token");
+    require(to != address(0), "Invalid recipient address"); // Added this line
     require(amountIn > 0, "Amount must be greater than 0");
 
     // Read the storage variable once into a local variable
@@ -148,6 +153,7 @@ function swapTokensForToken(
         to,
         block.timestamp // Replaced block.number with block.timestamp to align with Uniswap's typical deadline approach
     );
+     emit TokenSwapped(msg.sender, tokenOut, amountIn, amountOutMin); // Emitting event
 }
     // Swap Jerry tokens for ETH using Uniswap
     function swapJerryForETH(
@@ -157,6 +163,7 @@ function swapTokensForToken(
         uint256 deadline
         ) external ensure(deadline) nonReentrant {
     require(amountIn > 0, "Amount must be greater than 0");
+    require(to != address(0), "Invalid recipient address"); // Added this line
 
     // Approve the Uniswap router to spend JERRY tokens
     _approve(address(this), UNISWAP_V2_ROUTER, amountIn);
@@ -179,6 +186,7 @@ function swapTokensForToken(
         to,
         block.number
     );
+     emit TokenSwapped(msg.sender, tokenOut, amountIn, amountOutMin); 
 }
 
     // Swap ETH for Jerry tokens using Uniswap
@@ -188,6 +196,7 @@ function swapTokensForToken(
         uint256 deadline
         ) external payable ensure(deadline) nonReentrant {
         require(msg.value > 0, "Amount must be greater than 0");
+        require(to != address(0), "Invalid recipient address"); // Added this line
 
         // Calculate the fees
         uint256 burnFeeAmount = _calcBurningFee(msg.value);
@@ -215,5 +224,6 @@ function swapTokensForToken(
         // Burn the burn fee
         _burn(address(this), burnFeeAmount);
     }
+     emit TokenSwapped(msg.sender, tokenOut, amountIn, amountOutMin); 
 }
 
