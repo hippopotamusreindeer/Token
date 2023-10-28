@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.21;
 
 // Importing various OpenZeppelin libraries and Uniswap interface.
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -212,7 +212,8 @@ function swapTokensForToken(
 
         // Burn the burn fee
         _burn(address(this), burnFeeAmount);
+        emit TokenSwapped(msg.sender, tokenOut, amountIn, amountOutMin);         
     }
-     emit TokenSwapped(msg.sender, tokenOut, amountIn, amountOutMin); 
+     
 }
 
