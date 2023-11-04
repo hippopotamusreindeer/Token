@@ -55,7 +55,7 @@ contract Jerry is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
 
 
     // Constructor function for contract initialization.
-    constructor() ERC20("Jerry", "JERRY") {
+    constructor(address initialOwner) ERC20("Token", "TOKEN") Ownable(initialOwner) {
         _mint(msg.sender, initialSupply);
         uniswapRouter = IUniswapV2Router02(UNISWAP_V2_ROUTER);
     }
