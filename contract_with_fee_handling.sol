@@ -25,7 +25,7 @@ contract Jerry is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
     IUniswapV2Router02 private immutable uniswapRouter;
 
     // Initial token supply.
-    uint256 private immutable initialSupply = 392491700000 ether;
+    uint256 private immutable initialSupply = 3924917000 ether;
 
     // Constants for burn and developer fees.
     uint8 private constant BURN_FEE = 1;    // 1% Burn-Fee
