@@ -14,61 +14,59 @@ import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 // Define the contract, inheriting from multiple OpenZeppelin contracts for standard functionality.
-contract Jerry is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
+contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
 
-    // State variables for WETH and Uniswap router addresses, and developer wallet.
-    address private WETH;
-    address private developer_wallet = 0x893a25A5744ab5680629D4EE8204B721B04342BD;
+    // State variables for weth and Uniswap router addresses, and developer wallet.
+    address private immutable weth = 0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6;
+    address private immutable  developerWallet = 0x41fC21B79f3fDe918d9F5CF364061F1c106c0Ca2;
     address private constant UNISWAP_V2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
     
     // Declare the Uniswap router.
-    IUniswapV2Router02 private uniswapRouter;
+    IUniswapV2Router02 private immutable uniswapRouter;
 
     // Initial token supply.
-    uint256 constant initialSupply = 392491700000000000000000000000;
+    uint256 private immutable initialSupply = 392491700000 ether;
 
     // Constants for burn and developer fees.
-    uint8 private constant _burn_fee = 1;    // 1% Burn-Fee
-    uint8 private constant _dev_fee = 15;    // 1.5% Dev-Fee
+    uint8 private constant BURN_FEE = 1;    // 1% Burn-Fee
+    uint8 private constant DEV_FEE = 15;    // 1.5% Dev-Fee
     
     // Modifier to check the deadline for transactions.
     modifier ensure(uint deadline) {
-        require(deadline >= block.timestamp, 'UniswapV2Router: EXPIRED');
+        require(deadline >= block.timestamp, "UniswapV2Router: EXPIRED");
         _;
     }
 
 
-
-    // Setter functions
+/*   // Setter functions
     // Function to set Developer Wallet address, only callable by the owner.
-    function setDeveloperWallet(address _developerWallet) external onlyOwner {
+    function setDeveloperWallet(address developerWallet) external onlyOwner {
         require(_developerWallet != address(0), "Invalid Developer Wallet address");
-        developer_wallet = _developerWallet;
+        developerWallet = _developerWallet;
     }
 
-    // Function to set WETH address, only callable by the owner.
-    function setWETHAddress(address _weth) external onlyOwner {
-        require(_weth != address(0), "Invalid WETH address");
-        WETH = _weth;
-    }
-
+    // Function to set weth address, only callable by the owner.
+    function setWethAddress(address weth) external onlyOwner {
+        require(_weth != address(0), "Invalid weth address");
+        weth = _weth;
+    } */
 
 
     // Constructor function for contract initialization.
-    constructor(address initialOwner) ERC20("Token", "TOKEN") Ownable(initialOwner) {
+    constructor(address initialOwner) public ERC20("Jerry", "JERRY") Ownable(initialOwner) {
         _mint(msg.sender, initialSupply);
         uniswapRouter = IUniswapV2Router02(UNISWAP_V2_ROUTER);
     }
 
     //Fee Calculation
     // Internal function to calculate burning fee.
-    function _calcBurningFee(uint256 amount) internal view returns (uint256) {
-        return amount * _burn_fee / 100;
+    function _calcBurningFee(uint256 amount) internal pure returns (uint256) {
+        return amount * BURN_FEE / 100;
     }
 
     // Internal function to calculate developer fee.
-    function _calcDevFee(uint256 amount) internal view returns (uint256) {
-        return amount * _dev_fee / 1000;
+    function _calcDevFee(uint256 amount) internal pure returns (uint256) {
+        return amount * DEV_FEE / 1000;
     }
 
     // Internal function to calculate transfer amount after fees.
@@ -83,20 +81,18 @@ contract Jerry is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         uint256 localDevFeeAmount = _calcDevFee(amountIn);
         
         // Transfer burn fee to developer wallet and burn it.
-        _transfer(msg.sender, developer_wallet, localBurnFeeAmount);
+        _transfer(msg.sender, developerWallet, localBurnFeeAmount);
         _burn(msg.sender, localBurnFeeAmount);
         
         return amountIn - localBurnFeeAmount - localDevFeeAmount;
     }
-
-
 
     // Overriding ERC20 transfer to include custom fees.
     function _transfer(address sender, address recipient, uint256 amount) internal override {
         require(sender != address(0), "Transfer from the zero address");
         require(recipient != address(0), "Transfer to the zero address");
 
-        if (sender != developer_wallet && recipient != developer_wallet) {
+        if (sender != developerWallet && recipient != developerWallet) {
             uint256 burnFeeAmount = _calcBurningFee(amount);
             uint256 devFeeAmount = _calcDevFee(amount);
 
@@ -104,7 +100,7 @@ contract Jerry is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
 
             super._transfer(sender, recipient, transferAmount);
             _burn(sender, burnFeeAmount);
-            super._transfer(sender, developer_wallet, devFeeAmount);
+            super._transfer(sender, developerWallet, devFeeAmount);
         } else {
             super._transfer(sender, recipient, amount);
         }
@@ -136,14 +132,14 @@ contract Jerry is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
 
         // Prepare the token path for the swap
         address[] memory path;
-        if (tokenOut == WETH) {
+        if (tokenOut == weth) {
             path = new address[](2);
             path[0] = address(this);
-            path[1] = WETH; // Use the updated WETH address
+            path[1] = weth; // Use the updated weth address
         } else {
             path = new address[](3);
             path[0] = address(this);
-            path[1] = WETH; // Use the updated WETH address
+            path[1] = weth; // Use the updated weth address
             path[2] = tokenOut;
         }
 
@@ -176,10 +172,10 @@ contract Jerry is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
     // Transfer Jerry tokens from the sender to this contract
     _transfer(msg.sender, address(this), amountIn);
 
-    // Prepare the token path for the swap (Jerry -> WETH -> ETH)
+    // Prepare the token path for the swap (Jerry -> weth -> ETH)
     address[] memory path = new address[](2);
     path[0] = address(this);
-    path[1] = WETH; // Use the updated WETH address
+    path[1] = weth; // Use the updated weth address
 
     // Perform the swap on Uniswap
     uniswapRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(
@@ -208,9 +204,9 @@ contract Jerry is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         // Calculate the amount to swap after deducting fees
         uint256 amountToSwap = msg.value - burnFeeAmount - devFeeAmount;
 
-        // Prepare the token path for the swap (ETH -> WETH -> Jerry)
+        // Prepare the token path for the swap (ETH -> weth -> Jerry)
         address[] memory path = new address[](2);
-        path[0] = WETH; // Use the updated WETH address
+        path[0] = weth; // Use the updated weth address
         path[1] = address(this);
 
         // Perform the swap on Uniswap
@@ -221,8 +217,8 @@ contract Jerry is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
             block.timestamp
         );
 
-        // Transfer Jerry Dev_Fees to Developer_Wallet
-        payable(developer_wallet).transfer(devFeeAmount);
+        // Transfer Jerry Dev_Fees to developerWallet
+        payable(developerWallet).transfer(devFeeAmount);
 
         // Burn the burn fee
         _burn(address(this), burnFeeAmount);
