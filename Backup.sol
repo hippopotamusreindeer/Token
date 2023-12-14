@@ -18,18 +18,21 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
 
     // State variables for weth and Uniswap router addresses, and developer wallet.
     address private immutable weth = 0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6;
-    address private immutable  developerWallet = 0x41fC21B79f3fDe918d9F5CF364061F1c106c0Ca2;
+    address private immutable  developerWallet = 0x893a25A5744ab5680629D4EE8204B721B04342BD;
+    address private immutable  cexWallet = 0x893a25A5744ab5680629D4EE8204B721B04342BD; //Ändern !!
+    address private immutable  marketingWallet = 0x893a25A5744ab5680629D4EE8204B721B04342BD; //Ändern!!
     address private constant UNISWAP_V2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-    
+    address private pairAddressUniswap;
+
     // Declare the Uniswap router.
     IUniswapV2Router02 private immutable uniswapRouter;
 
     // Initial token supply.
     uint256 private immutable initialSupply = 392491700000 ether;
-
+    uint256 public _maxWltSize;
     // Constants for burn and developer fees.
     uint8 private constant BURN_FEE = 1;    // 1% Burn-Fee
-    uint8 private constant DEV_FEE = 15;    // 1.5% Dev-Fee
+    uint8 private constant DEV_FEE = 19;    // 1.9% Dev-Fee
     
     // Modifier to check the deadline for transactions.
     modifier ensure(uint deadline) {
@@ -37,26 +40,18 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         _;
     }
 
-
-/*   // Setter functions
-    // Function to set Developer Wallet address, only callable by the owner.
-    function setDeveloperWallet(address developerWallet) external onlyOwner {
-        require(_developerWallet != address(0), "Invalid Developer Wallet address");
-        developerWallet = _developerWallet;
-    }
-
-    // Function to set weth address, only callable by the owner.
-    function setWethAddress(address weth) external onlyOwner {
-        require(_weth != address(0), "Invalid weth address");
-        weth = _weth;
-    } */
-
-
     // Constructor function for contract initialization.
     constructor(address initialOwner) public ERC20("Jerry", "JERRY") Ownable(initialOwner) {
         _mint(msg.sender, initialSupply);
         uniswapRouter = IUniswapV2Router02(UNISWAP_V2_ROUTER);
+        _maxWltSize = (totalSupply() * 3) / 100;
     }
+
+    function pairAddress(address pairAddress) external onlyOwner {
+        require(pairAddress != address(0), "Invalid Developer Wallet address");
+        pairAddressUniswap = pairAddress;
+    }
+
 
     //Fee Calculation
     // Internal function to calculate burning fee.
@@ -87,23 +82,37 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         return amountIn - localBurnFeeAmount - localDevFeeAmount;
     }
 
-    // Overriding ERC20 transfer to include custom fees.
+   // Overriding ERC20 transfer to include custom fees and check for max wallet size.
     function _transfer(address sender, address recipient, uint256 amount) internal override {
         require(sender != address(0), "Transfer from the zero address");
         require(recipient != address(0), "Transfer to the zero address");
 
-        if (sender != developerWallet && recipient != developerWallet) {
-            uint256 burnFeeAmount = _calcBurningFee(amount);
-            uint256 devFeeAmount = _calcDevFee(amount);
+        // Maximale Wallet-Größe ist 3% des gesamten Token-Angebots
+        uint256 maxWalletSize = totalSupply() * 3 / 100;
 
-            uint256 transferAmount = _calcTransfer(amount, burnFeeAmount + devFeeAmount);
 
-            super._transfer(sender, recipient, transferAmount);
+        // Überprüfen, ob der Transfer die maximale Wallet-Größe des Empfängers überschreitet
+        if (recipient != pairAddressUniswap && recipient != developerWallet && sender != developerWallet) {
+            require(balanceOf(recipient) + amount <= maxWalletSize, "Transfer would exceed maximum wallet balance");
+        }
+
+          if (sender != developerWallet && recipient != developerWallet) {
+        // Ihre Logik für Gebühren usw.
+        uint256 burnFeeAmount = _calcBurningFee(amount);
+        uint256 devFeeAmount = _calcDevFee(amount);
+        uint256 transferAmount = _calcTransfer(amount, burnFeeAmount + devFeeAmount);
+
+        super._transfer(sender, recipient, transferAmount);
+        if (burnFeeAmount > 0) {
             _burn(sender, burnFeeAmount);
+        }
+        if (devFeeAmount > 0) {
             super._transfer(sender, developerWallet, devFeeAmount);
+        }
         } else {
             super._transfer(sender, recipient, amount);
         }
+
     }
 
 
@@ -118,14 +127,13 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         require(tokenOut != address(0), "Invalid token address");
         require(tokenOut != address(this), "Cannot swap to the same token");
         require(amountIn > 0, "Amount must be greater than 0");
-
     
         // Calculate the amount to swap after deducting fees
         uint256 amountToSwap = _handleFeesAndCalculateAmount(amountIn);
 
+
         // Transfer Jerry tokens from the sender to this contract
         _transfer(msg.sender, address(this), amountIn);
-
 
         // Approve the Uniswap router to spend JERRY tokens
         _approve(address(this), UNISWAP_V2_ROUTER, amountToSwap);
@@ -186,9 +194,6 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         block.timestamp
     );
 }
-
-
-
     // Swap ETH for Jerry tokens using Uniswap
     function swapETHForJerry(
         uint256 amountOutMin, 
@@ -202,8 +207,7 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         uint256 devFeeAmount = _calcDevFee(msg.value);
 
         // Calculate the amount to swap after deducting fees
-        uint256 amountToSwap = msg.value - burnFeeAmount - devFeeAmount;
-
+        uint amountToSwap = msg.value - burnFeeAmount - devFeeAmount;
         // Prepare the token path for the swap (ETH -> weth -> Jerry)
         address[] memory path = new address[](2);
         path[0] = weth; // Use the updated weth address
