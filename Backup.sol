@@ -30,10 +30,14 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
     // Initial token supply.
     uint256 private immutable initialSupply = 392491700000 ether;
     uint256 public _maxWltSize;
+    uint256 public _maxWltSizePercentage = 3;
+
     // Constants for burn and developer fees.
     uint8 private constant BURN_FEE = 1;    // 1% Burn-Fee
     uint8 private constant DEV_FEE = 19;    // 1.9% Dev-Fee
-    
+    uint8 private constant DIVIDE_BY_HUNDRED = 100;
+    uint16 private constant DIVIDE_BY_THOUSAND = 1000;
+
     // Modifier to check the deadline for transactions.
     modifier ensure(uint deadline) {
         require(deadline >= block.timestamp, "UniswapV2Router: EXPIRED");
@@ -44,24 +48,24 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
     constructor(address initialOwner) public ERC20("Jerry", "JERRY") Ownable(initialOwner) {
         _mint(msg.sender, initialSupply);
         uniswapRouter = IUniswapV2Router02(UNISWAP_V2_ROUTER);
-        _maxWltSize = (totalSupply() * 3) / 100;
+        _maxWltSize = (totalSupply() * _maxWltSizePercentage) / 100;
     }
 
-    function pairAddress(address pairAddress) external onlyOwner {
-        require(pairAddress != address(0), "Invalid Developer Wallet address");
-        pairAddressUniswap = pairAddress;
+    function pairAddress(address _pairAddress) external onlyOwner nonReentrant{
+        require(_pairAddress != address(0), "Invalid Developer Wallet address");
+        pairAddressUniswap = _pairAddress;
     }
 
 
     //Fee Calculation
     // Internal function to calculate burning fee.
     function _calcBurningFee(uint256 amount) internal pure returns (uint256) {
-        return amount * BURN_FEE / 100;
+        return amount * BURN_FEE / DIVIDE_BY_HUNDRED;
     }
 
     // Internal function to calculate developer fee.
     function _calcDevFee(uint256 amount) internal pure returns (uint256) {
-        return amount * DEV_FEE / 1000;
+        return amount * DEV_FEE / DIVIDE_BY_THOUSAND;
     }
 
     // Internal function to calculate transfer amount after fees.
@@ -88,7 +92,7 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         require(recipient != address(0), "Transfer to the zero address");
 
         // Maximale Wallet-Größe ist 3% des gesamten Token-Angebots
-        uint256 maxWalletSize = totalSupply() * 3 / 100;
+        uint256 maxWalletSize = totalSupply() * _maxWltSizePercentage / DIVIDE_BY_HUNDRED;
 
 
         // Überprüfen, ob der Transfer die maximale Wallet-Größe des Empfängers überschreitet
