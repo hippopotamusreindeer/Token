@@ -29,8 +29,8 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
 
     // Initial token supply.
     uint256 private immutable initialSupply = 392491700000 ether;
-    uint256 public _maxWltSize;
-    uint256 public _maxWltSizePercentage = 3;
+    uint256 public maxWalletSize;
+    uint256 public immutable maxWalletSizePercentage = 3;
 
     // Constants for burn and developer fees.
     uint8 private constant BURN_FEE = 1;    // 1% Burn-Fee
@@ -48,7 +48,7 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
     constructor(address initialOwner) public ERC20("Jerry", "JERRY") Ownable(initialOwner) {
         _mint(msg.sender, initialSupply);
         uniswapRouter = IUniswapV2Router02(UNISWAP_V2_ROUTER);
-        _maxWltSize = (totalSupply() * _maxWltSizePercentage) / 100;
+        maxWalletSize = (totalSupply() * maxWalletSizePercentage) / DIVIDE_BY_HUNDRED;
     }
 
     function pairAddress(address _pairAddress) external onlyOwner nonReentrant{
@@ -91,7 +91,7 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         require(recipient != address(0), "Transfer to the zero address");
 
         // maximum WalletSize of 3%
-        uint256 maxWalletSize = totalSupply() * _maxWltSizePercentage / DIVIDE_BY_HUNDRED;
+        uint256 maxWalletSize = totalSupply() * maxWalletSizePercentage / DIVIDE_BY_HUNDRED;
 
         // Check if transfer would bypass the maximum WalletSize of the receiver
         if (recipient != pairAddressUniswap && recipient != developerWallet && sender != developerWallet && recipient != cexWallet && sender != cexWallet && recipient != marketingWallet && sender != marketingWallet) {
