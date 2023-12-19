@@ -19,8 +19,8 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
     // State variables for weth and Uniswap router addresses, and developer wallet
     address private immutable weth = 0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6;
     address private immutable  developerWallet = 0x893a25A5744ab5680629D4EE8204B721B04342BD;
-    address private immutable  cexWallet = 0xbBAb880C4028aF3187Fe507923ce92449A48307f; //Ändern !!
-    address private immutable  marketingWallet = 0x9F00c648E1Bb9488979D8D97A4D4dfc6Bc7fc084; //Ändern!!
+    address private immutable  cexWallet = 0xbBAb880C4028aF3187Fe507923ce92449A48307f; 
+    address private immutable  marketingWallet = 0x9F00c648E1Bb9488979D8D97A4D4dfc6Bc7fc084; 
     address private constant UNISWAP_V2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
     address private pairAddressUniswap;
 
@@ -94,11 +94,11 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         uint256 maxWalletSize = totalSupply() * _maxWltSizePercentage / DIVIDE_BY_HUNDRED;
 
         // Check if transfer would bypass the maximum WalletSize of the receiver
-        if (recipient != pairAddressUniswap && recipient != developerWallet && sender != developerWallet) {
+        if (recipient != pairAddressUniswap && recipient != developerWallet && sender != developerWallet && recipient != cexWallet && sender != cexWallet && recipient != marketingWallet && sender != marketingWallet) {
             require(balanceOf(recipient) + amount <= maxWalletSize, "Transfer would exceed maximum wallet balance");
         }
 
-          if (sender != developerWallet && recipient != developerWallet) {
+          if (sender != developerWallet && recipient != developerWallet && recipient != cexWallet && recipient != marketingWallet) {
         // Calaculate Fees
         uint256 burnFeeAmount = _calcBurningFee(amount);
         uint256 devFeeAmount = _calcDevFee(amount);
