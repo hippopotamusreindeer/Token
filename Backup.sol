@@ -29,7 +29,7 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
 
     // Initial token supply.
     uint256 private immutable initialSupply = 392491700000 ether;
-    uint256 public maxWalletSize;
+    uint256 public immutable maxWalletSize;
     uint256 public immutable maxWalletSizePercentage = 3;
 
     // Constants for burn and developer fees.
@@ -51,9 +51,9 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         maxWalletSize = (totalSupply() * maxWalletSizePercentage) / DIVIDE_BY_HUNDRED;
     }
 
-    function pairAddress(address _pairAddress) external onlyOwner nonReentrant{
-        require(_pairAddress != address(0), "Invalid Developer Wallet address");
-        pairAddressUniswap = _pairAddress;
+    function pairAddress(address newPairAddress) external onlyOwner nonReentrant{
+        require(newPairAddress != address(0), "Invalid Developer Wallet address");
+        pairAddressUniswap = newPairAddress;
     }
 
     //Fee Calculation
@@ -89,9 +89,6 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
     function _transfer(address sender, address recipient, uint256 amount) internal override {
         require(sender != address(0), "Transfer from the zero address");
         require(recipient != address(0), "Transfer to the zero address");
-
-        // maximum WalletSize of 3%
-        uint256 maxWalletSize = totalSupply() * maxWalletSizePercentage / DIVIDE_BY_HUNDRED;
 
         // Check if transfer would bypass the maximum WalletSize of the receiver
         if (recipient != pairAddressUniswap && recipient != developerWallet && sender != developerWallet && recipient != cexWallet && sender != cexWallet && recipient != marketingWallet && sender != marketingWallet) {
