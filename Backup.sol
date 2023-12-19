@@ -13,14 +13,14 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-// Define the contract, inheriting from multiple OpenZeppelin contracts for standard functionality.
+// Define the contract, inheriting from multiple OpenZeppelin contracts for standard functionality
 contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
 
-    // State variables for weth and Uniswap router addresses, and developer wallet.
+    // State variables for weth and Uniswap router addresses, and developer wallet
     address private immutable weth = 0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6;
     address private immutable  developerWallet = 0x893a25A5744ab5680629D4EE8204B721B04342BD;
-    address private immutable  cexWallet = 0x893a25A5744ab5680629D4EE8204B721B04342BD; //Ändern !!
-    address private immutable  marketingWallet = 0x893a25A5744ab5680629D4EE8204B721B04342BD; //Ändern!!
+    address private immutable  cexWallet = 0xbBAb880C4028aF3187Fe507923ce92449A48307f; //Ändern !!
+    address private immutable  marketingWallet = 0x9F00c648E1Bb9488979D8D97A4D4dfc6Bc7fc084; //Ändern!!
     address private constant UNISWAP_V2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
     address private pairAddressUniswap;
 
@@ -56,7 +56,6 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         pairAddressUniswap = _pairAddress;
     }
 
-
     //Fee Calculation
     // Internal function to calculate burning fee.
     function _calcBurningFee(uint256 amount) internal pure returns (uint256) {
@@ -91,17 +90,16 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         require(sender != address(0), "Transfer from the zero address");
         require(recipient != address(0), "Transfer to the zero address");
 
-        // Maximale Wallet-Größe ist 3% des gesamten Token-Angebots
+        // maximum WalletSize of 3%
         uint256 maxWalletSize = totalSupply() * _maxWltSizePercentage / DIVIDE_BY_HUNDRED;
 
-
-        // Überprüfen, ob der Transfer die maximale Wallet-Größe des Empfängers überschreitet
+        // Check if transfer would bypass the maximum WalletSize of the receiver
         if (recipient != pairAddressUniswap && recipient != developerWallet && sender != developerWallet) {
             require(balanceOf(recipient) + amount <= maxWalletSize, "Transfer would exceed maximum wallet balance");
         }
 
           if (sender != developerWallet && recipient != developerWallet) {
-        // Ihre Logik für Gebühren usw.
+        // Calaculate Fees
         uint256 burnFeeAmount = _calcBurningFee(amount);
         uint256 devFeeAmount = _calcDevFee(amount);
         uint256 transferAmount = _calcTransfer(amount, burnFeeAmount + devFeeAmount);
@@ -116,9 +114,7 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         } else {
             super._transfer(sender, recipient, amount);
         }
-
     }
-
 
     // Swap Jerry tokens for another ERC20 token using Uniswap
     function swapTokensForToken(
@@ -135,7 +131,6 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         // Calculate the amount to swap after deducting fees
         uint256 amountToSwap = _handleFeesAndCalculateAmount(amountIn);
 
-
         // Transfer Jerry tokens from the sender to this contract
         _transfer(msg.sender, address(this), amountIn);
 
@@ -147,11 +142,11 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         if (tokenOut == weth) {
             path = new address[](2);
             path[0] = address(this);
-            path[1] = weth; // Use the updated weth address
+            path[1] = weth; 
         } else {
             path = new address[](3);
             path[0] = address(this);
-            path[1] = weth; // Use the updated weth address
+            path[1] = weth; 
             path[2] = tokenOut;
         }
 
@@ -164,8 +159,6 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
             block.timestamp
         );
     }
-
-
 
     // Swap Jerry tokens for ETH using Uniswap
     function swapJerryForETH(
@@ -187,7 +180,7 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
     // Prepare the token path for the swap (Jerry -> weth -> ETH)
     address[] memory path = new address[](2);
     path[0] = address(this);
-    path[1] = weth; // Use the updated weth address
+    path[1] = weth; 
 
     // Perform the swap on Uniswap
     uniswapRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(
@@ -198,6 +191,7 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         block.timestamp
     );
 }
+
     // Swap ETH for Jerry tokens using Uniswap
     function swapETHForJerry(
         uint256 amountOutMin, 
@@ -214,7 +208,7 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         uint amountToSwap = msg.value - burnFeeAmount - devFeeAmount;
         // Prepare the token path for the swap (ETH -> weth -> Jerry)
         address[] memory path = new address[](2);
-        path[0] = weth; // Use the updated weth address
+        path[0] = weth; 
         path[1] = address(this);
 
         // Perform the swap on Uniswap
