@@ -18,9 +18,9 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
 
     // State variables for weth and Uniswap router addresses, and developer wallet
     address private immutable weth = 0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6;
-    address private immutable  developerWallet = 0x893a25A5744ab5680629D4EE8204B721B04342BD;
-    address private immutable  cexWallet = 0xbBAb880C4028aF3187Fe507923ce92449A48307f; 
-    address private immutable  marketingWallet = 0x9F00c648E1Bb9488979D8D97A4D4dfc6Bc7fc084; 
+    address private immutable developerWallet = 0xA655553CCD585A969ADbB5Ec605696a1eE8F731A;
+    address private immutable cexWallet = 0xbBAb880C4028aF3187Fe507923ce92449A48307f; 
+    address private immutable marketingWallet = 0x9F00c648E1Bb9488979D8D97A4D4dfc6Bc7fc084; 
     address private constant UNISWAP_V2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
     address private pairAddressUniswap;
 
@@ -33,9 +33,9 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
     uint256 public immutable maxWalletSizePercentage = 3;
 
     // Constants for burn and developer fees.
-    uint8 private constant BURN_FEE = 1;    // 1% Burn-Fee
+    uint8 private constant BURN_FEE = 10;    // 1% Burn-Fee
     uint8 private constant DEV_FEE = 19;    // 1.9% Dev-Fee
-    uint8 private constant DIVIDE_BY_HUNDRED = 100;
+    //uint8 private constant DIVIDE_BY_HUNDRED = 100;
     uint16 private constant DIVIDE_BY_THOUSAND = 1000;
 
     // Modifier to check the deadline for transactions.
@@ -48,7 +48,7 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
     constructor(address initialOwner) public ERC20("Jerry", "JERRY") Ownable(initialOwner) {
         _mint(msg.sender, initialSupply);
         uniswapRouter = IUniswapV2Router02(UNISWAP_V2_ROUTER);
-        maxWalletSize = (totalSupply() * maxWalletSizePercentage) / DIVIDE_BY_HUNDRED;
+        maxWalletSize = (totalSupply() * maxWalletSizePercentage) / DIVIDE_BY_THOUSAND;
     }
 
     function pairAddress(address newPairAddress) external onlyOwner nonReentrant{
@@ -59,7 +59,7 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
     //Fee Calculation
     // Internal function to calculate burning fee.
     function _calcBurningFee(uint256 amount) internal pure returns (uint256) {
-        return amount * BURN_FEE / DIVIDE_BY_HUNDRED;
+        return amount * BURN_FEE / DIVIDE_BY_THOUSAND;
     }
 
     // Internal function to calculate developer fee.
@@ -90,28 +90,30 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         require(sender != address(0), "Transfer from the zero address");
         require(recipient != address(0), "Transfer to the zero address");
 
-        // Check if transfer would bypass the maximum WalletSize of the receiver
+/*      // Check if transfer would bypass the maximum WalletSize of the receiver
         if (recipient != pairAddressUniswap && recipient != developerWallet && sender != developerWallet && recipient != cexWallet && sender != cexWallet && recipient != marketingWallet && sender != marketingWallet) {
             require(balanceOf(recipient) + amount <= maxWalletSize, "Transfer would exceed maximum wallet balance");
-        }
+        } */
 
-          if (sender != developerWallet && recipient != developerWallet && recipient != cexWallet && recipient != marketingWallet) {
-        // Calaculate Fees
-        uint256 burnFeeAmount = _calcBurningFee(amount);
-        uint256 devFeeAmount = _calcDevFee(amount);
-        uint256 transferAmount = _calcTransfer(amount, burnFeeAmount + devFeeAmount);
+        if (sender != developerWallet && recipient != developerWallet && recipient != cexWallet && recipient != marketingWallet) {
+            // Calaculate Fees
+            uint256 burnFeeAmount = _calcBurningFee(amount);
+            uint256 devFeeAmount = _calcDevFee(amount);
+            uint256 transferAmount = _calcTransfer(amount, burnFeeAmount + devFeeAmount);
 
-        super._transfer(sender, recipient, transferAmount);
-        if (burnFeeAmount > 0) {
-            _burn(sender, burnFeeAmount);
-        }
-        if (devFeeAmount > 0) {
-            super._transfer(sender, developerWallet, devFeeAmount);
-        }
-        } else {
+            super._transfer(sender, recipient, transferAmount);
+            if (burnFeeAmount > 0) {
+                _burn(sender, burnFeeAmount);
+            }
+            if (devFeeAmount > 0) {
+                super._transfer(sender, developerWallet, devFeeAmount);
+            }
+        } 
+        else {
             super._transfer(sender, recipient, amount);
         }
     }
+    
 
     // Swap Jerry tokens for another ERC20 token using Uniswap
     function swapTokensForToken(
