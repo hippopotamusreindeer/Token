@@ -30,7 +30,7 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
     // Initial token supply.
     uint256 private immutable initialSupply = 392491700000 ether;
     uint256 public immutable maxWalletSize;
-    uint256 public immutable maxWalletSizePercentage = 3;
+    uint256 public immutable maxWalletSizePercentage = 30;
 
     // Constants for burn and developer fees.
     uint8 private constant BURN_FEE = 10;    // 1% Burn-Fee
@@ -52,7 +52,7 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
     }
 
     function pairAddress(address newPairAddress) external onlyOwner nonReentrant{
-        require(newPairAddress != address(0), "Invalid Developer Wallet address");
+        require(newPairAddress != address(0), "Invalid pair address");
         pairAddressUniswap = newPairAddress;
     }
 
@@ -90,8 +90,8 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         require(sender != address(0), "Transfer from the zero address");
         require(recipient != address(0), "Transfer to the zero address");
 
-     // Check if transfer would bypass the maximum WalletSize of the receiver
-        if (recipient != pairAddressUniswap && recipient != developerWallet && sender != developerWallet && recipient != cexWallet && sender != cexWallet && recipient != marketingWallet && sender != marketingWallet) {
+        // Check if transfer would bypass the maximum WalletSize of the receiver
+        if (recipient != pairAddressUniswap && recipient != UNISWAP_V2_ROUTER && recipient != developerWallet && sender != developerWallet && recipient != cexWallet && sender != cexWallet && recipient != marketingWallet && sender != marketingWallet) {
             require(balanceOf(recipient) + amount <= maxWalletSize, "Transfer would exceed maximum wallet balance");
         }
 
@@ -115,21 +115,17 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
     }
     
 
-    // try to make changes here !!
     function transferFrom(address sender, address recipient, uint256 value) public virtual override returns (bool) {
         address spender = _msgSender();
-        if (spender == pairAddressUniswap) {
-            _spendAllowance(sender, spender, value);
-            super._transfer(sender, recipient, value);
-            return true;
+         _spendAllowance(sender, spender, value);
+        if (recipient == developerWallet || sender == developerWallet) {
+        super._transfer(sender, recipient, value);
         }
         else {
-            _spendAllowance(sender, spender, value);
             _transfer(sender, recipient, value);
-            return true;
         }
+        return true;
     }
-
 
     // Swap Jerry tokens for another ERC20 token using Uniswap
     function swapTokensForToken(
