@@ -1,42 +1,38 @@
 // SPDX-License-Identifier: MIT
 // Specifying the license under which the code is available.
 pragma solidity ^0.8.20;
-// Using a fixed version of Solidity.
-
 pragma abicoder v2;
-// Enabling ABI v2 encoding, which allows passing structs as function arguments.
 
-// Importing various OpenZeppelin libraries and Uniswap interface.
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-// Define the contract, inheriting from multiple OpenZeppelin contracts for standard functionality
 contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
 
     // State variables for weth and Uniswap router addresses, and developer wallet
-    address private immutable weth = 0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6;
-    address private immutable developerWallet = 0xA655553CCD585A969ADbB5Ec605696a1eE8F731A;
-    address private immutable cexWallet = 0xbBAb880C4028aF3187Fe507923ce92449A48307f; 
-    address private immutable marketingWallet = 0x9F00c648E1Bb9488979D8D97A4D4dfc6Bc7fc084; 
-    address private constant UNISWAP_V2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+    address private immutable weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; //WETH-Address
+    address private constant UNISWAP_V2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; //UNISWAP_V2_ROUTER-Address
     address private pairAddressUniswap;
 
     // Declare the Uniswap router.
     IUniswapV2Router02 private immutable uniswapRouter;
 
+    //Wallets for tokenallocation
+    address private immutable developerWallet = 0xA655553CCD585A969ADbB5Ec605696a1eE8F731A; //vor Launch ändern
+    address private immutable cexWallet = 0xbBAb880C4028aF3187Fe507923ce92449A48307f;  //vor Launch ändern
+    address private immutable marketingWallet = 0x9F00c648E1Bb9488979D8D97A4D4dfc6Bc7fc084; //vor Launch ändern
+
     // Initial token supply.
-    uint256 private immutable initialSupply = 392491700000 ether;
+    uint256 private immutable initialSupply = 3924917000 ether;
     uint256 public immutable maxWalletSize;
     uint256 public immutable maxWalletSizePercentage = 30;
 
     // Constants for burn and developer fees.
     uint8 private constant BURN_FEE = 10;    // 1% Burn-Fee
     uint8 private constant DEV_FEE = 19;    // 1.9% Dev-Fee
-    //uint8 private constant DIVIDE_BY_HUNDRED = 100;
-    uint16 private constant DIVIDE_BY_THOUSAND = 1000;
+    uint16 private constant DIVIDE_BY_THOUSAND = 1000; //For calculation
 
     // Modifier to check the deadline for transactions.
     modifier ensure(uint deadline) {
@@ -85,7 +81,7 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         return amountIn - localBurnFeeAmount - localDevFeeAmount;
     }
 
-   // Overriding ERC20 transfer to include custom fees and check for max wallet size.
+   // Overriding ERC20 transfer to include custom fees and check for max wallet size
     function _transfer(address sender, address recipient, uint256 amount) internal override {
         require(sender != address(0), "Transfer from the zero address");
         require(recipient != address(0), "Transfer to the zero address");
@@ -114,7 +110,7 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         }
     }
     
-
+   // Overriding ERC20 transferFrom to include custom fees and check for max wallet size
     function transferFrom(address sender, address recipient, uint256 value) public virtual override returns (bool) {
         address spender = _msgSender();
          _spendAllowance(sender, spender, value);
@@ -180,28 +176,28 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
         ) external ensure(deadline) nonReentrant {
     require(amountIn > 0, "Amount must be greater than 0");
 
-    // Approve the Uniswap router to spend JERRY tokens
-    _approve(address(this), UNISWAP_V2_ROUTER, amountIn);
+        // Approve the Uniswap router to spend JERRY tokens
+        _approve(address(this), UNISWAP_V2_ROUTER, amountIn);
 
-    uint256 amountToSwap = _handleFeesAndCalculateAmount(amountIn);
+        uint256 amountToSwap = _handleFeesAndCalculateAmount(amountIn);
 
-    // Transfer Jerry tokens from the sender to this contract
-    _transfer(msg.sender, address(this), amountIn);
+        // Transfer Jerry tokens from the sender to this contract
+        _transfer(msg.sender, address(this), amountIn);
 
-    // Prepare the token path for the swap (Jerry -> weth -> ETH)
-    address[] memory path = new address[](2);
-    path[0] = address(this);
-    path[1] = weth; 
+        // Prepare the token path for the swap (Jerry -> weth -> ETH)
+        address[] memory path = new address[](2);
+        path[0] = address(this);
+        path[1] = weth; 
 
-    // Perform the swap on Uniswap
-    uniswapRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(
-        amountToSwap,
-        amountOutMin,
-        path,
-        to,
-        block.timestamp
-    );
-}
+        // Perform the swap on Uniswap
+        uniswapRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(
+            amountToSwap,
+            amountOutMin,
+            path,
+            to,
+            block.timestamp
+        );
+    }
 
     // Swap ETH for Jerry tokens using Uniswap
     function swapETHForJerry(
