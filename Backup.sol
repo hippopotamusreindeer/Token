@@ -20,9 +20,9 @@ contract JERRY is ERC20, ERC20Burnable, Ownable, ReentrancyGuard  {
     IUniswapV2Router02 private immutable uniswapRouter;
 
     //Wallets for tokenallocation
-    address private immutable developerWallet = 0xA655553CCD585A969ADbB5Ec605696a1eE8F731A; //vor Launch ändern
-    address private immutable cexWallet = 0xbBAb880C4028aF3187Fe507923ce92449A48307f;  //vor Launch ändern
-    address private immutable marketingWallet = 0x9F00c648E1Bb9488979D8D97A4D4dfc6Bc7fc084; //vor Launch ändern
+    address private immutable developerWallet = 0x41fC21B79f3fDe918d9F5CF364061F1c106c0Ca2;
+    address private immutable cexWallet = 0xbBAb880C4028aF3187Fe507923ce92449A48307f;
+    address private immutable marketingWallet = 0x9F00c648E1Bb9488979D8D97A4D4dfc6Bc7fc084;
 
     // Initial token supply.
     uint256 private immutable initialSupply = 3924917000 ether;
